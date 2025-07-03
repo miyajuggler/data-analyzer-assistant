@@ -51,6 +51,16 @@ class DataAnalysisAgent:
             temperature=0.1
         )
         self.graph = self._create_graph()
+        self.progress_callback = None
+    
+    def set_progress_callback(self, callback):
+        """進捗状況を報告するためのコールバック関数を設定"""
+        self.progress_callback = callback
+    
+    def _update_progress(self, message: str, progress: int):
+        """進捗状況を更新"""
+        if self.progress_callback:
+            self.progress_callback(message, progress)
     
     def _create_graph(self) -> StateGraph:
         """LangGraphのステートグラフを作成"""
@@ -103,6 +113,7 @@ class DataAnalysisAgent:
     def situation_awareness_node(self, state: AnalysisState) -> AnalysisState:
         """状況把握ノード: データの前処理と傾向把握"""
         print("🔍 データの状況を把握中...")
+        self._update_progress("🔍 データの状況を把握中...", 15)
         
         if state["dataframe"] is None:
             raise ValueError("DataFrameが提供されていません")
@@ -116,6 +127,7 @@ class DataAnalysisAgent:
     def planner_node(self, state: AnalysisState) -> AnalysisState:
         """プランナーノード: 分析計画を立案"""
         print("📋 分析計画を立案中...")
+        self._update_progress("📋 分析計画を立案中...", 25)
         
         # 基本的な分析タスクを生成（10個に制限）
         basic_tasks = generate_analysis_tasks(state["data_summary"])
@@ -145,6 +157,26 @@ class DataAnalysisAgent:
         
         current_task = state["plan"][current_index]
         print(f"💻 コード生成中: {current_task['description']}")
+        
+        # タスクの種類に応じたメッセージとアイコンを決定
+        task_type = current_task.get('type', 'analysis')
+        progress_messages = {
+            'basic_stats': f"📊 基本統計を計算中... ({current_index + 1}/{len(state['plan'])})",
+            'distribution': f"📈 分布を分析中... ({current_index + 1}/{len(state['plan'])})",
+            'correlation': f"🔗 相関関係を調査中... ({current_index + 1}/{len(state['plan'])})",
+            'visualization': f"🎨 可視化を生成中... ({current_index + 1}/{len(state['plan'])})",
+            'trend': f"📉 トレンドを分析中... ({current_index + 1}/{len(state['plan'])})",
+            'outlier': f"🔍 異常値を検出中... ({current_index + 1}/{len(state['plan'])})",
+            'groupby': f"📂 グループ別分析中... ({current_index + 1}/{len(state['plan'])})",
+            'time_series': f"⏰ 時系列分析中... ({current_index + 1}/{len(state['plan'])})"
+        }
+        
+        message = progress_messages.get(task_type, f"💻 分析コードを生成中... ({current_index + 1}/{len(state['plan'])})")
+        
+        # 進捗状況を更新（タスクの進捗に応じて）
+        base_progress = 35
+        task_progress = int((current_index / len(state["plan"])) * 40)
+        self._update_progress(message, base_progress + task_progress)
         
         # 基本的なコード生成
         basic_code = create_analysis_code(current_task)
@@ -210,7 +242,30 @@ class DataAnalysisAgent:
     
     def code_execution_node(self, state: AnalysisState) -> AnalysisState:
         """コード実行ノード: 生成されたコードを実行"""
+        current_index = state["current_task_index"]
+        current_task = state["plan"][current_index]
+        
         print("⚡ コードを実行中...")
+        
+        # タスクの種類に応じたメッセージとアイコンを決定
+        task_type = current_task.get('type', 'analysis')
+        execution_messages = {
+            'basic_stats': f"📊 基本統計を計算中... ({current_index + 1}/{len(state['plan'])})",
+            'distribution': f"📈 分布分析を実行中... ({current_index + 1}/{len(state['plan'])})",
+            'correlation': f"🔗 相関分析を実行中... ({current_index + 1}/{len(state['plan'])})",
+            'visualization': f"🎨 グラフを生成中... ({current_index + 1}/{len(state['plan'])})",
+            'trend': f"📉 トレンド分析を実行中... ({current_index + 1}/{len(state['plan'])})",
+            'outlier': f"🔍 異常値検出を実行中... ({current_index + 1}/{len(state['plan'])})",
+            'groupby': f"📂 グループ別集計を実行中... ({current_index + 1}/{len(state['plan'])})",
+            'time_series': f"⏰ 時系列分析を実行中... ({current_index + 1}/{len(state['plan'])})"
+        }
+        
+        message = execution_messages.get(task_type, f"⚡ {current_task['description']}を実行中... ({current_index + 1}/{len(state['plan'])})")
+        
+        # 進捗状況を更新
+        base_progress = 45
+        task_progress = int((current_index / len(state["plan"])) * 30)
+        self._update_progress(message, base_progress + task_progress)
         
         if not state["code_string"]:
             return state
@@ -305,6 +360,7 @@ class DataAnalysisAgent:
     def reporter_node(self, state: AnalysisState) -> AnalysisState:
         """報告ノード: 分析結果を基にレポートを作成"""
         print("📝 レポートを作成中...")
+        self._update_progress("📝 レポートを作成中...", 85)
         
         # 実行結果をまとめる
         results_summary = []
@@ -359,6 +415,7 @@ class DataAnalysisAgent:
     def reviewer_node(self, state: AnalysisState) -> AnalysisState:
         """レビューノード: レポートの最終チェック"""
         print("🔍 レポートの最終チェック中...")
+        self._update_progress("🔍 結果を検証中...", 95)
         
         system_prompt = """
 あなたは経験豊富な編集者です。

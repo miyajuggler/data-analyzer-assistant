@@ -175,6 +175,7 @@ def generate_analysis_tasks(data_summary: Dict[str, Any]) -> List[Dict[str, Any]
     # タスク1: 基本的な情報表示（必須）
     tasks.append({
         "task_type": "basic_info",
+        "type": "basic_stats",
         "description": "データの基本情報を表示"
     })
     
@@ -186,6 +187,7 @@ def generate_analysis_tasks(data_summary: Dict[str, Any]) -> List[Dict[str, Any]
         if len(numeric_cols) > 0 and len(tasks) < 5:
             tasks.append({
                 "task_type": "histogram",
+                "type": "distribution",
                 "column": numeric_cols[0],
                 "description": f"{numeric_cols[0]}のヒストグラム"
             })
@@ -194,6 +196,7 @@ def generate_analysis_tasks(data_summary: Dict[str, Any]) -> List[Dict[str, Any]
         if len(numeric_cols) > 1 and len(tasks) < 5:
             tasks.append({
                 "task_type": "histogram",
+                "type": "distribution",
                 "column": numeric_cols[1],
                 "description": f"{numeric_cols[1]}のヒストグラム"
             })
@@ -202,6 +205,7 @@ def generate_analysis_tasks(data_summary: Dict[str, Any]) -> List[Dict[str, Any]
         if len(numeric_cols) > 2 and len(tasks) < 5:
             tasks.append({
                 "task_type": "histogram",
+                "type": "distribution",
                 "column": numeric_cols[2],
                 "description": f"{numeric_cols[2]}のヒストグラム"
             })
@@ -210,6 +214,7 @@ def generate_analysis_tasks(data_summary: Dict[str, Any]) -> List[Dict[str, Any]
         if len(numeric_cols) > 1 and len(tasks) < 5:
             tasks.append({
                 "task_type": "correlation_matrix",
+                "type": "correlation",
                 "description": "数値カラム間の相関行列"
             })
     
@@ -220,6 +225,7 @@ def generate_analysis_tasks(data_summary: Dict[str, Any]) -> List[Dict[str, Any]
             if len(tasks) < 5:
                 tasks.append({
                     "task_type": "bar_chart",
+                    "type": "visualization",
                     "column": col,
                     "description": f"{col}の分布（棒グラフ）"
                 })
@@ -231,6 +237,7 @@ def generate_analysis_tasks(data_summary: Dict[str, Any]) -> List[Dict[str, Any]
     while len(tasks) < 5:
         tasks.append({
             "task_type": "basic_info",
+            "type": "basic_stats",
             "description": f"データの基本情報を表示（タスク{len(tasks)+1}）"
         })
     

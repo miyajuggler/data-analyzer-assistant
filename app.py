@@ -98,13 +98,13 @@ def analyze_data(df: pd.DataFrame, api_key: str, model_name: str):
     try:
         # エージェントの初期化
         status_text.text("🤖 AIエージェントを初期化中...")
-        progress_bar.progress(10)
+        progress_bar.progress(5)
         
         agent = DataAnalysisAgent(openai_api_key=api_key, model_name=model_name)
         
-        # 分析実行
-        status_text.text("🔍 データ分析を実行中...")
-        progress_bar.progress(30)
+        # 分析実行（詳細な進捗表示）
+        status_text.text("🔍 データの状況を把握中...")
+        progress_bar.progress(15)
         
         # セッション状態にストリーミング用のプレースホルダーを作成
         if 'analysis_container' not in st.session_state:
@@ -114,11 +114,8 @@ def analyze_data(df: pd.DataFrame, api_key: str, model_name: str):
             # リアルタイムでの進捗表示用のプレースホルダー
             progress_placeholder = st.empty()
             
-            # 分析実行
-            result = agent.analyze(df)
-            
-            progress_bar.progress(90)
-            status_text.text("📝 結果を整理中...")
+            # 分析実行を段階的に実行
+            result = execute_analysis_with_progress(agent, df, progress_bar, status_text)
             
             if result["success"]:
                 progress_bar.progress(100)
@@ -136,6 +133,44 @@ def analyze_data(df: pd.DataFrame, api_key: str, model_name: str):
     finally:
         progress_bar.empty()
         status_text.empty()
+
+def execute_analysis_with_progress(agent, df: pd.DataFrame, progress_bar, status_text):
+    """詳細な進捗表示付きで分析を実行"""
+    
+    # 進捗状況を追跡するための変数
+    current_progress = 15
+    
+    def progress_callback(message: str, progress: int):
+        """進捗コールバック関数"""
+        nonlocal current_progress
+        current_progress = progress
+        status_text.text(message)
+        progress_bar.progress(progress)
+    
+    # エージェントに進捗コールバックを設定
+    agent.set_progress_callback(progress_callback)
+    
+    try:
+        # 分析実行
+        result = agent.analyze(df)
+        
+        # 最終的な進捗更新
+        if result["success"]:
+            status_text.text("🔍 結果を検証中...")
+            progress_bar.progress(95)
+            
+            # 少し待機
+            import time
+            time.sleep(0.5)
+            
+            status_text.text("📝 結果を整理中...")
+            progress_bar.progress(98)
+            time.sleep(0.3)
+        
+        return result
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 def display_analysis_results(result: Dict[str, Any]):
     """分析結果を表示"""
